@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import {
+  ScrollView,
   ListView,
   Platform,
   StyleSheet,
@@ -31,6 +32,10 @@ class Autocomplete extends Component {
      * the result list.
      */
     listContainerStyle: View.propTypes.style,
+    /**
+     * These style will be applied to the result list.
+     */
+    listStyle: ScrollView.propTypes.style,
     /**
      * `onShowResults` will be called when list is going to
      * show/hide results.
