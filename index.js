@@ -21,11 +21,19 @@ class Autocomplete extends Component {
      * rendered in respect to the entered text.
      */
     data: PropTypes.array,
+    /**
+     * Set to `true` to hide the suggestion list.
+     */
+    hideResults: PropTypes.bool,
     /*
      * These styles will be applied to the container which surrounds
      * the textInput component.
      */
     inputContainerStyle: View.propTypes.style,
+    /*
+     * Set `keyboardShouldPersistTaps` to true if RN version is <= 0.39.
+     */
+    keyboardShouldPersistTaps: ListView.propTypes.keyboardShouldPersistTaps,
     /*
      * These styles will be applied to the container which surrounds
      * the result list.
@@ -36,6 +44,10 @@ class Autocomplete extends Component {
      * show/hide results.
      */
     onShowResults: PropTypes.func,
+    /**
+     * method for intercepting swipe on ListView. Used for ScrollView support on Android
+     */
+    onStartShouldSetResponderCapture: PropTypes.func,
     /**
      * `renderItem` will be called to render the data objects
      * which will be displayed in the result view below the
@@ -57,6 +69,8 @@ class Autocomplete extends Component {
   static defaultProps = {
     data: [],
     defaultValue: '',
+    keyboardShouldPersistTaps: 'always',
+    onStartShouldSetResponderCapture: () => false,
     renderItem: rowData => <Text>{rowData}</Text>,
     renderSeparator: null,
     renderTextInput: props => <TextInput {...props} />
@@ -67,6 +81,7 @@ class Autocomplete extends Component {
 
     const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
     this.state = { dataSource: ds.cloneWithRows(props.data) };
+    this.resultList = null;
   }
 
   componentWillReceiveProps({ data }) {
@@ -92,12 +107,13 @@ class Autocomplete extends Component {
 
   renderResultList() {
     const { dataSource } = this.state;
-    const { listStyle, renderItem, renderSeparator } = this.props;
+    const { listStyle, renderItem, renderSeparator, keyboardShouldPersistTaps } = this.props;
 
     return (
       <ListView
+        ref={(resultList) => { this.resultList = resultList; }}
         dataSource={dataSource}
-        keyboardShouldPersistTaps="always"
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
         renderRow={renderItem}
         renderSeparator={renderSeparator}
         style={[styles.list, listStyle]}
@@ -121,9 +137,11 @@ class Autocomplete extends Component {
     const { dataSource } = this.state;
     const {
       containerStyle,
+      hideResults,
       inputContainerStyle,
       listContainerStyle,
-      onShowResults
+      onShowResults,
+      onStartShouldSetResponderCapture
     } = this.props;
     const showResults = dataSource.getRowCount() > 0;
 
@@ -135,9 +153,14 @@ class Autocomplete extends Component {
         <View style={[styles.inputContainer, inputContainerStyle]}>
           {this.renderTextInput()}
         </View>
-        <View style={listContainerStyle}>
-          {showResults && this.renderResultList()}
-        </View>
+        {!hideResults && (
+          <View
+            style={listContainerStyle}
+            onStartShouldSetResponderCapture={onStartShouldSetResponderCapture}
+          >
+            {showResults && this.renderResultList()}
+          </View>
+        )}
       </View>
     );
   }
